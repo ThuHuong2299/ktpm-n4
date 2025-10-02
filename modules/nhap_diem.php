@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->beginTransaction();
             
             foreach ($_POST['students'] as $student_id => $grades) {
-                if (!empty($grades['diem_chuyen_can']) || !empty($grades['diem_giua_ky']) || !empty($grades['diem_giua_ky_2']) || !empty($grades['diem_thao_luan']) || !empty($grades['diem_cuoi_ky'])) {
+                if (!empty($grades['diem_chuyen_can']) || !empty($grades['diem_giua_ky']) || !empty($grades['diem_giua_ky_2'] ?? '') || !empty($grades['diem_thao_luan']) || !empty($grades['diem_cuoi_ky'])) {
                     // Check if grade record exists
                     $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM Diem WHERE MaLopHocPhan = ? AND MaSinhVien = ?");
                     $check_stmt->execute([$class_id, $student_id]);
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->execute([
                             $grades['diem_chuyen_can'] ?: null,
                             $grades['diem_giua_ky'] ?: null,
-                            $grades['diem_giua_ky_2'] ?: null,
+                            ($grades['diem_giua_ky_2'] ?? '') ?: null,
                             $grades['diem_thao_luan'] ?: null,
                             $grades['diem_cuoi_ky'] ?: null,
                             $class_id,
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $student_id,
                             $grades['diem_chuyen_can'] ?: null,
                             $grades['diem_giua_ky'] ?: null,
-                            $grades['diem_giua_ky_2'] ?: null,
+                            ($grades['diem_giua_ky_2'] ?? '') ?: null,
                             $grades['diem_thao_luan'] ?: null,
                             $grades['diem_cuoi_ky'] ?: null
                         ]);

@@ -22,6 +22,4 @@ if (in_array($page, $allowed_pages)) {
     echo "<h2>Trang không hợp lệ</h2>";
 }
 
-// Include footer
-include 'includes/footer.php';
 ?>
