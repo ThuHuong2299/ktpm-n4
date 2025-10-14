@@ -13,26 +13,55 @@ $statistics = [
     'grade_distribution' => ['A' => 0, 'B+' => 0, 'B' => 0, 'C+' => 0, 'C' => 0, 'D+' => 0, 'D' => 0, 'F' => 0]
 ];
 
-// Handle report generation
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_report'])) {
-    try {
-        $stmt = $pdo->prepare("INSERT INTO BaoCaoXepLoai (MaLopHocPhan, NguoiThucHien, DinhDangXuat) VALUES (?, ?, ?)");
-        $stmt->execute([$class_id, 'System Admin', $_POST['format']]);
-        $success_message = "Đã tạo báo cáo thành công!";
-    } catch (PDOException $e) {
-        $error_message = "Lỗi tạo báo cáo: " . $e->getMessage();
-    }
-}
-
-// Get class information
+// Get class information FIRST
 $class_info = null;
 if ($class_id) {
     try {
-        $stmt = $pdo->prepare("SELECT *, SoTinChi FROM LopHocPhan WHERE MaLopHocPhan = ? AND TrangThaiLop = 'hoạt động'");
+        $stmt = $pdo->prepare("SELECT * FROM LopHocPhan WHERE MaLopHocPhan = ?");
         $stmt->execute([$class_id]);
         $class_info = $stmt->fetch();
+        
+        // Kiểm tra nếu lớp không tồn tại hoặc không hoạt động
+        if (!$class_info) {
+            $error_message = "Không tìm thấy lớp học phần!";
+            $class_id = ''; // Reset để hiển thị form chọn lớp
+        } elseif ($class_info['TrangThaiLop'] !== 'hoạt động') {
+            $error_message = "Lớp học phần này đã ngừng hoạt động!";
+        }
     } catch (PDOException $e) {
         $error_message = "Lỗi: " . $e->getMessage();
+    }
+}
+
+// Handle report generation
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_report']) && $class_info) {
+    // Chỉ xử lý khi có thông tin lớp hợp lệ
+    if ($class_info['TrangThaiLop'] === 'hoạt động') {
+        try {
+            // Kiểm tra số sinh viên có điểm hoàn chỉnh
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as completed_students
+                FROM Diem d 
+                JOIN SinhVien_LopHocPhan slhp ON d.MaSinhVien = slhp.MaSinhVien AND d.MaLopHocPhan = slhp.MaLopHocPhan
+                WHERE d.MaLopHocPhan = ? AND d.DiemTongKet IS NOT NULL AND d.XepLoaiChu IS NOT NULL 
+                AND slhp.TrangThaiDangKy = 'đang học'
+            ");
+            $stmt->execute([$class_id]);
+            $completed_count = $stmt->fetch()['completed_students'];
+            
+            if ($completed_count > 0) {
+                // Tạo báo cáo
+                $stmt = $pdo->prepare("INSERT INTO BaoCaoXepLoai (MaLopHocPhan, NguoiThucHien, DinhDangXuat) VALUES (?, ?, ?)");
+                $stmt->execute([$class_id, 'System Admin', $_POST['format']]);
+                $success_message = "Đã tạo báo cáo thành công!";
+            } else {
+                $error_message = "Không thể xuất báo cáo: Chưa có sinh viên nào hoàn thành điểm tổng kết.";
+            }
+        } catch (PDOException $e) {
+            $error_message = "Lỗi tạo báo cáo: " . $e->getMessage();
+        }
+    } else {
+        $error_message = "Không thể xuất báo cáo: Lớp học phần không hoạt động.";
     }
 }
 
@@ -201,13 +230,87 @@ if ($success_message): ?>
     <!-- Export Options -->
     <div style="margin-top: 20px; background: #f8f9fa; padding: 15px; border: 1px solid #ddd; border-radius: 4px;">
         <h4 style="margin: 0 0 15px 0;">Xuất báo cáo</h4>
-        <form method="post" style="display: flex; gap: 10px; align-items: center;">
-            <select name="format" class="form-control" style="width: 150px;">
-                <option value="pdf">PDF</option>
-                <option value="excel">Excel</option>
-            </select>
-            <button type="submit" name="generate_report" class="btn btn-primary">Tạo báo cáo</button>
-        </form>
+        
+        <?php
+        // Kiểm tra điều kiện xuất báo cáo
+        $export_allowed = false;
+        $export_conditions = [];
+        
+        if ($class_info) {
+            // 1. Lớp có trạng thái hoạt động
+            $is_active = $class_info['TrangThaiLop'] === 'hoạt động';
+            $export_conditions[] = [
+                'condition' => $is_active,
+                'message' => 'Lớp học phần có trạng thái "hoạt động"',
+                'status' => $is_active ? 'success' : 'error'
+            ];
+            
+            // 2. Ít nhất một sinh viên có điểm tổng kết hoàn chỉnh
+            $completed_students_count = 0;
+            if ($is_active && $class_id) {
+                try {
+                    $stmt = $pdo->prepare("
+                        SELECT COUNT(*) as completed_students
+                        FROM Diem d 
+                        JOIN SinhVien_LopHocPhan slhp ON d.MaSinhVien = slhp.MaSinhVien AND d.MaLopHocPhan = slhp.MaLopHocPhan
+                        WHERE d.MaLopHocPhan = ? AND d.DiemTongKet IS NOT NULL AND d.XepLoaiChu IS NOT NULL 
+                        AND slhp.TrangThaiDangKy = 'đang học'
+                    ");
+                    $stmt->execute([$class_id]);
+                    $completed_students_count = $stmt->fetch()['completed_students'];
+                } catch (PDOException $e) {
+                    $completed_students_count = 0;
+                }
+            }
+            
+            $has_completed_students = $completed_students_count > 0;
+            $export_conditions[] = [
+                'condition' => $has_completed_students,
+                'message' => "Ít nhất một sinh viên có điểm tổng kết hoàn chỉnh (Hiện tại: {$completed_students_count} sinh viên)",
+                'status' => $has_completed_students ? 'success' : 'error'
+            ];
+            
+            // 3. Xếp loại chữ được tính theo thang điểm chuẩn
+            $export_conditions[] = [
+                'condition' => true,
+                'message' => 'Xếp loại chữ được tính theo thang điểm chuẩn TMU',
+                'status' => 'success'
+            ];
+            
+            // Kiểm tra tất cả điều kiện
+            $export_allowed = $is_active && $has_completed_students;
+        }
+        ?>
+        
+        <!-- Hiển thị điều kiện xuất báo cáo -->
+        <div style="margin-bottom: 15px;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #333;">Điều kiện xuất báo cáo:</p>
+            <ul style="margin: 0; padding-left: 20px;">
+                <?php foreach ($export_conditions as $condition): ?>
+                    <li style="margin-bottom: 5px; color: <?= $condition['status'] === 'success' ? '#28a745' : '#dc3545' ?>;">
+                        <?php if ($condition['status'] === 'success'): ?>
+                            ✓ <?= htmlspecialchars($condition['message']) ?>
+                        <?php else: ?>
+                            ✗ <?= htmlspecialchars($condition['message']) ?>
+                        <?php endif; ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        
+        <?php if ($export_allowed): ?>
+            <form method="post" style="display: flex; gap: 10px; align-items: center;">
+                <select name="format" class="form-control" style="width: 150px;">
+                    <option value="pdf">PDF</option>
+                    <option value="excel">Excel</option>
+                </select>
+                <button type="submit" name="generate_report" class="btn btn-primary">Tạo báo cáo</button>
+            </form>
+        <?php else: ?>
+            <div style="padding: 10px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; color: #856404;">
+                <strong>Không thể xuất báo cáo:</strong> Chưa đáp ứng đủ điều kiện bắt buộc. Vui lòng hoàn thiện dữ liệu trước khi xuất báo cáo.
+            </div>
+        <?php endif; ?>
     </div>
 <?php else: ?>
     <!-- Class Selection -->

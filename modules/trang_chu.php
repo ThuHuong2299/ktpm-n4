@@ -17,11 +17,17 @@ if (!empty($search)) {
     )";
 }
 
-// Query to get class list
-$query = "SELECT MaLopHocPhan as ma_lop, TenMonHoc as ten_mon, SoTinChi as so_tin_chi, HocKy as hoc_ky, NamHoc as nam_hoc, GiangVienPhuTrach as giang_vien
-          FROM LopHocPhan 
+// Query to get class list with export readiness check
+$query = "SELECT l.MaLopHocPhan as ma_lop, l.TenMonHoc as ten_mon, l.SoTinChi as so_tin_chi, 
+                 l.HocKy as hoc_ky, l.NamHoc as nam_hoc, l.GiangVienPhuTrach as giang_vien,
+                 COUNT(DISTINCT slhp.MaSinhVien) as total_students,
+                 COUNT(DISTINCT CASE WHEN d.DiemTongKet IS NOT NULL AND d.XepLoaiChu IS NOT NULL THEN d.MaSinhVien END) as completed_students
+          FROM LopHocPhan l
+          LEFT JOIN SinhVien_LopHocPhan slhp ON l.MaLopHocPhan = slhp.MaLopHocPhan AND slhp.TrangThaiDangKy = 'đang học'
+          LEFT JOIN Diem d ON slhp.MaSinhVien = d.MaSinhVien AND slhp.MaLopHocPhan = d.MaLopHocPhan
           $whereClause
-          ORDER BY NamHoc DESC, HocKy DESC";
+          GROUP BY l.MaLopHocPhan, l.TenMonHoc, l.SoTinChi, l.HocKy, l.NamHoc, l.GiangVienPhuTrach
+          ORDER BY l.NamHoc DESC, l.HocKy DESC";
 $result = mysqli_query($conn, $query);
 ?>
 
@@ -56,10 +62,12 @@ $result = mysqli_query($conn, $query);
         <thead>
             <tr>
                 <th>Mã lớp</th>
-<th>Tên môn</th>
+                <th>Tên môn</th>
                 <th>Số tín chỉ</th>
                 <th>Học kỳ</th>
                 <th>Năm học</th>
+                <th>Sinh viên</th>
+                <th>Trạng thái xuất BC</th>
                 <th>Thao tác</th>
             </tr>
         </thead>
@@ -67,12 +75,30 @@ $result = mysqli_query($conn, $query);
             <?php
             if (mysqli_num_rows($result) > 0) {
                 while ($row = mysqli_fetch_assoc($result)) {
+                    // Kiểm tra điều kiện xuất báo cáo
+                    $can_export = ($row['completed_students'] > 0);
+                    $export_status = $can_export ? 'Sẵn sàng' : 'Chưa sẵn sàng';
+                    $export_color = $can_export ? '#28a745' : '#dc3545';
+                    $export_icon = $can_export ? '✓' : '✗';
+                    
                     echo "<tr>";
                     echo "<td>" . htmlspecialchars($row['ma_lop']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['ten_mon']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['so_tin_chi']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['hoc_ky']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['nam_hoc']) . "</td>";
+                    echo "<td style='text-align: center;'>";
+                    echo "<span style='color: #666;'>" . $row['completed_students'] . "/" . $row['total_students'] . "</span>";
+                    echo "<br><small style='color: #999;'>Hoàn thành</small>";
+                    echo "</td>";
+                    echo "<td style='text-align: center;'>";
+                    echo "<span style='color: {$export_color}; font-weight: bold;'>{$export_icon} {$export_status}</span>";
+                    if (!$can_export && $row['total_students'] > 0) {
+                        echo "<br><small style='color: #999;'>Cần nhập điểm</small>";
+                    } elseif ($row['total_students'] == 0) {
+                        echo "<br><small style='color: #999;'>Chưa có SV</small>";
+                    }
+                    echo "</td>";
                     echo "<td>
                             <div class='action-buttons'>
                                 <a href='index.php?page=thong_ke&class=" . htmlspecialchars($row['ma_lop']) . "' class='btn btn-view'>Xem thống kê</a>
@@ -86,7 +112,7 @@ $result = mysqli_query($conn, $query);
                 $emptyMessage = !empty($search) 
                     ? "Không tìm thấy lớp nào phù hợp với từ khóa \"" . htmlspecialchars($search) . "\""
                     : "Không tìm thấy dữ liệu";
-                echo "<tr><td colspan='6' class='empty-message'>$emptyMessage</td></tr>";
+                echo "<tr><td colspan='8' class='empty-message'>$emptyMessage</td></tr>";
             }
             ?>
         </tbody>

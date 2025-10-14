@@ -4,7 +4,7 @@ USE QuanLyDiem;
 INSERT INTO SinhVien (MaSinhVien, HoTen, Email, NgaySinh) VALUES
 ('22D174523', 'Nguyễn Minh Đức', 'duc.nm@tmu.edu.vn', '2004-03-12'),
 ('22D186947', 'Trần Thị Hằng', 'hang.tt@tmu.edu.vn', '2004-08-20'),
-('22D159368', 'Lê Văn Hoàng', 'hoang.lv@tmu.edu.vn', '2004-05-07')
+('22D159368', 'Lê Văn Hoàng', 'hoang.lv@tmu.edu.vn', '2004-05-07'),
 ('22D167829', 'Phạm Văn Thành', 'thanh.pv@tmu.edu.vn', '2004-02-14'),
 ('22D195431', 'Đặng Thị Liên', 'lien.dt@tmu.edu.vn', '2004-06-28'),
 ('22D138765', 'Hoàng Minh Tuấn', 'tuan.hm@tmu.edu.vn', '2004-09-15'),
