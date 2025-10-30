@@ -3,7 +3,7 @@ $class_id = $_GET['class'] ?? '';
 $success_message = '';
 $error_message = '';
 
-// Handle form submissions
+// Xử lý gửi form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['save_grades'])) {
         try {
@@ -11,12 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             foreach ($_POST['students'] as $student_id => $grades) {
                 if (!empty($grades['diem_chuyen_can']) || !empty($grades['diem_giua_ky']) || !empty($grades['diem_giua_ky_2'] ?? '') || !empty($grades['diem_thao_luan']) || !empty($grades['diem_cuoi_ky'])) {
-                    // Check if grade record exists
+                    // Kiểm tra xem bản ghi điểm đã tồn tại chưa
                     $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM Diem WHERE MaLopHocPhan = ? AND MaSinhVien = ?");
                     $check_stmt->execute([$class_id, $student_id]);
                     
                     if ($check_stmt->fetchColumn() > 0) {
-                        // Update existing record
+                        // Cập nhật bản ghi đã tồn tại
                         $stmt = $pdo->prepare("UPDATE Diem 
                                                SET DiemChuyenCan = ?, DiemGiuaKy = ?, DiemGiuaKy2 = ?, DiemThaoLuan = ?, DiemCuoiKy = ?
                                                WHERE MaLopHocPhan = ? AND MaSinhVien = ?");
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $student_id
                         ]);
                     } else {
-                        // Insert new record
+                        // Thêm bản ghi mới
                         $stmt = $pdo->prepare("INSERT INTO Diem (MaLopHocPhan, MaSinhVien, DiemChuyenCan, DiemGiuaKy, DiemGiuaKy2, DiemThaoLuan, DiemCuoiKy) 
                                                VALUES (?, ?, ?, ?, ?, ?, ?)");
                         $stmt->execute([
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get class information
+// Lấy thông tin lớp học phần
 $class_info = null;
 if ($class_id) {
     try {
@@ -67,10 +67,10 @@ if ($class_id) {
     }
 }
 
-// Get search parameter
+// Lấy tham số tìm kiếm
 $search_student = isset($_GET['search_student']) ? trim($_GET['search_student']) : '';
 
-// Get students and their grades
+// Lấy danh sách sinh viên và điểm số
 $students = [];
 if ($class_id && $class_info) {
     try {
@@ -84,7 +84,7 @@ if ($class_id && $class_info) {
         
         $params = [$class_id, $class_id];
         
-        // Add search condition if search term is provided
+        // Thêm điều kiện tìm kiếm nếu có từ khóa tìm kiếm
         if (!empty($search_student)) {
             $sql .= " AND (sv.MaSinhVien LIKE ? OR sv.HoTen LIKE ?)";
             $search_param = "%{$search_student}%";
@@ -102,7 +102,7 @@ if ($class_id && $class_info) {
     }
 }
 
-// Get all classes for selection
+// Lấy tất cả lớp học phần để lựa chọn
 try {
     $stmt = $pdo->query("SELECT MaLopHocPhan, TenMonHoc FROM LopHocPhan WHERE TrangThaiLop = 'hoạt động' ORDER BY MaLopHocPhan");
     $all_classes = $stmt->fetchAll();
@@ -121,7 +121,7 @@ try {
     <div class="alert alert-error"><?= htmlspecialchars($error_message) ?></div>
 <?php endif; ?>
 
-<!-- Class Selection -->
+<!-- Chọn lớp học phần -->
 <div class="form-group" style="margin-bottom: 30px;">
     <label class="form-label">Chọn lớp học phần:</label>
     <form method="GET" action="index.php" style="display: flex; gap: 10px; align-items: end;">
@@ -142,7 +142,7 @@ try {
 </div>
 
 <?php if ($class_info): ?>
-    <!-- Class Information -->
+    <!-- Thông tin lớp học phần -->
     <div style="background: #f8f9fa; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 4px;">
         <h3 style="margin: 0 0 15px 0; color: #333;">Thông tin lớp học phần</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; font-size: 14px;">
@@ -176,7 +176,7 @@ try {
         </div>
     </div>
 
-    <!-- Search Student -->
+    <!-- Tìm kiếm sinh viên -->
     <div style="background: #fff; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 4px;">
         <form method="GET" action="index.php" style="display: flex; gap: 10px; align-items: center;">
             <input type="hidden" name="page" value="nhap_diem">
@@ -195,7 +195,7 @@ try {
     </div>
 
     <?php if (!empty($students)): ?>
-        <!-- Grade Entry Form -->
+        <!-- Form nhập điểm -->
         <form method="POST" action="index.php?page=nhap_diem&class=<?= urlencode($class_id) ?>&search_student=<?= urlencode($search_student) ?>">
             <div class="table-container">
                 <table class="table" style="min-width: auto; width: 100%;">
@@ -302,7 +302,7 @@ try {
 <?php endif; ?>
 
 <script>
-// Auto-submit search form when Enter is pressed
+// Tự động gửi form tìm kiếm khi nhấn Enter
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.querySelector('input[name="search_student"]');
     if (searchInput) {

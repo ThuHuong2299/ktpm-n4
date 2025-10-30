@@ -4,7 +4,7 @@ $action = $_GET['action'] ?? 'list';
 $success_message = '';
 $error_message = '';
 
-// Handle form submissions
+// Xử lý gửi form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_class'])) {
         try {
@@ -105,7 +105,7 @@ try {
 <?php endif; ?>
 
 <?php if ($action === 'add'): ?>
-    <!-- Add Class Form -->
+    <!-- Form thêm lớp học phần -->
     <h2>Thêm lớp học phần mới</h2>
     <form method="POST" action="index.php?page=quan_ly_lop">
         <div class="form-group">
@@ -157,9 +157,9 @@ try {
     </form>
 
 <?php elseif ($action === 'edit' && $edit_class): ?>
-    <!-- Update Class Information Form -->
+    <!-- Form cập nhật thông tin lớp học phần -->
     <?php
-    // Khởi tạo session nếu chưa có
+    // Khởi tạo phiên làm việc nếu chưa có
     if (session_status() == PHP_SESSION_NONE) {
         session_start();
     }
@@ -178,20 +178,20 @@ try {
     $thong_bao_update = '';
     $loi_update = '';
 
-    // Xử lý khi form được submit
+    // Xử lý khi biểu mẫu được gửi
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cap_nhat_giang_day'])) {
         $ma_lop = $edit_class['MaLopHocPhan'];
         $ly_do_chon = $_POST['ly_do_chon'] ?? '';
         $ly_do_chi_tiet = trim($_POST['ly_do_chi_tiet'] ?? '');
         $giang_vien_thay_the = trim($_POST['giang_vien_thay_the'] ?? '');
         
-        // Validation đơn giản
+        // Kiểm tra dữ liệu đầu vào cơ bản
         if (empty($ly_do_chon)) {
             $loi_update = "Vui lòng chọn lý do!";
         } elseif ($ly_do_chon == 'Khác' && empty($ly_do_chi_tiet)) {
             $loi_update = "Vui lòng nhập lý do chi tiết!";
         } else {
-            // Lưu đề xuất vào session
+            // Lưu đề xuất vào phiên làm việc
             if (!isset($_SESSION['de_xuat'])) {
                 $_SESSION['de_xuat'] = [];
             }
@@ -212,7 +212,7 @@ try {
         }
     }
 
-    // Lấy danh sách đề xuất đã gửi cho lớp này
+    // Lấy danh sách các đề xuất đã gửi cho lớp học phần này
     $ds_de_xuat_lop = [];
     if (isset($_SESSION['de_xuat'])) {
         foreach ($_SESSION['de_xuat'] as $id => $de_xuat) {
@@ -225,7 +225,7 @@ try {
     
     <h1>Cập nhật thông tin lớp</h1>
     
-    <!-- Hiển thị thông báo -->
+    <!-- Khu vực hiển thị thông báo -->
     <?php if ($thong_bao_update): ?>
         <div class="alert alert-success"><?php echo $thong_bao_update; ?></div>
     <?php endif; ?>
@@ -234,7 +234,7 @@ try {
         <div class="alert alert-error"><?php echo $loi_update; ?></div>
     <?php endif; ?>
 
-    <!-- Thông tin lớp học phần -->
+    <!-- Khung thông tin lớp học phần -->
     <div style="background: #f8f9fa; padding: 15px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 4px; font-family: 'Times New Roman', Tahoma, Geneva, Verdana, sans-serif;">
         <h3 style="margin: 0 0 15px 0; color: #333; font-family: 'Times New Roman', Tahoma, Geneva, Verdana, sans-serif;">Thông tin lớp học phần</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; font-size: 14px; font-family: 'Times New Roman', Tahoma, Geneva, Verdana, sans-serif;">
@@ -261,7 +261,7 @@ try {
         </div>
     </div>
 
-    <!-- Form cập nhật giảng dạy -->
+    <!-- Biểu mẫu cập nhật giảng dạy -->
     <div class="form-container">
         <h3>Cập nhật giảng dạy</h3>
         <p>Gửi đề xuất thay đổi giảng viên phụ trách cho lớp học phần này</p>
@@ -299,7 +299,7 @@ try {
         </form>
     </div>
 
-    <!-- Danh sách đề xuất đã gửi cho lớp này -->
+    <!-- Bảng danh sách đề xuất đã gửi cho lớp học phần này -->
     <?php if (!empty($ds_de_xuat_lop)): ?>
     <div class="form-container">
         <h3>Đề xuất đã gửi cho lớp này</h3>
@@ -344,14 +344,14 @@ try {
         }
     }
 
-    // Kiểm tra khi load trang
+    // Kiểm tra khi tải trang
     document.addEventListener('DOMContentLoaded', function() {
         toggleChiTiet();
     });
     </script>
 
 <?php elseif ($action === 'delete' && isset($_GET['id'])): ?>
-    <!-- Delete Confirmation -->
+    <!-- Xác nhận xóa lớp học phần -->
     <h2>Xác nhận xóa lớp học phần</h2>
     <?php
     try {
@@ -390,19 +390,19 @@ try {
     ?>
 
 <?php else: ?>
-    <!-- List Classes -->
+    <!-- Danh sách lớp học phần -->
     <div style="margin-bottom: 20px;">
         <a href="index.php?page=quan_ly_lop&action=add" class="btn btn-primary">Thêm lớp học phần</a>
     </div>
     
-    <!-- Search Form -->
+    <!-- Form tìm kiếm -->
     <form class="search-form" method="GET" action="">
         <input type="hidden" name="page" value="quan_ly_lop">
         <input type="text" name="search" id="searchInput" placeholder="Nhập mã lớp hoặc tên môn" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
         <button type="submit">Tra cứu</button>
     </form>
     
-    <!-- Table -->
+    <!-- Bảng dữ liệu -->
     <div class="table-container">
         <table id="gradeTable">
             <thead>
