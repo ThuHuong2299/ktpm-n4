@@ -1,0 +1,113 @@
+/**
+ * CSS cho hệ thống thông báo (Notification System)
+ * File: assests/notification.css
+ * Sử dụng: Include trong header.php hoặc các trang cần thông báo
+ */
+
+/* Container chứa các thông báo - hiển thị ở góc phải màn hình */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+}
+
+/* CSS cho hệ thống thông báo */
+.notification {
+    background: #fff;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateX(400px); /* Bắt đầu ở ngoài màn hình bên phải */
+    transition: all 0.3s ease-in-out;
+    border-left: 4px solid;
+    font-family: 'Times New Roman', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+    cursor: pointer;
+    max-width: 380px;
+    word-wrap: break-word;
+}
+
+/* Animation hiển thị - trượt từ phải sang trái */
+.notification.show { 
+    transform: translateX(0); 
+}
+
+/* Các loại thông báo với màu sắc khác nhau */
+.notification.success { 
+    border-color: #28a745; 
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+.notification.error { 
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+}
+
+.notification.warning { 
+    border-color: #ffc107;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+}
+
+.notification.info { 
+    border-color: #17a2b8;
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+}
+
+/* Icon cho từng loại thông báo */
+.notification::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    vertical-align: text-top;
+}
+
+.notification.success::before { 
+    content: '✓'; 
+    color: #28a745; 
+    font-weight: bold; 
+}
+
+.notification.error::before { 
+    content: '✗'; 
+    color: #dc3545; 
+    font-weight: bold; 
+}
+
+.notification.warning::before { 
+    content: '⚠'; 
+    color: #ffc107; 
+    font-weight: bold; 
+}
+
+.notification.info::before { 
+    content: 'ℹ'; 
+    color: #17a2b8; 
+    font-weight: bold; 
+}
+
+/* Hover effect */
+.notification:hover {
+    transform: translateX(-10px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+    #notification-container {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .notification {
+        max-width: none;
+        transform: translateX(100%);
+    }
+}

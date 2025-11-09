@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         testdox="true"
+         executionOrder="depends,defects"
+         requireCoverageMetadata="false"
+         beStrictAboutCoverageMetadata="false"
+         beStrictAboutOutputDuringTests="true"
+         failOnRisky="true"
+         failOnWarning="false"
+         stopOnError="false"
+         stopOnFailure="false">
+    
+    <!-- Định nghĩa thư mục test -->
+    <testsuites>
+        <testsuite name="KiemThuChucNangF2_TinhDiemTongKet">
+            <directory suffix="Test.php">tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <!-- Cấu hình PHP -->
+    <php>
+        <!-- Báo cáo tất cả lỗi PHP -->
+        <ini name="error_reporting" value="-1"/>
+        <!-- Giới hạn bộ nhớ cho test -->
+        <ini name="memory_limit" value="1G"/>
+        <!-- Timeout cho mỗi test -->
+        <ini name="max_execution_time" value="300"/>
+        <!-- Múi giờ -->
+        <ini name="date.timezone" value="Asia/Ho_Chi_Minh"/>
+        
+        <!-- Biến môi trường cho test -->
+        <env name="TEST_DATABASE" value="QuanLyDiem"/>
+        <env name="TEST_ENVIRONMENT" value="testing"/>
+    </php>
+</phpunit>
